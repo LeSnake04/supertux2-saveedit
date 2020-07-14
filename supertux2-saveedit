@@ -1,0 +1,95 @@
+#!/bin/bash
+
+printf "********************************\n"
+printf "Supertux2 Save editor by LeSnake\n"
+printf "********************************\n"
+
+SAVEDIR=~/.local/share/supertux2/profile1/
+CONFIGDIR=~/.supertux2-saveedit/
+BACKUPDIR=~/.supertux2-saveedit/Backup
+mkdir $CONFIGDIR -p
+mkdir $BACKUPDIR -p
+cd $SAVEDIR
+
+case $1 in
+		'list')
+				printf "Avaiable Saves:\n"
+				ls *.stsg
+		;;
+		'backup')
+			printf "creating backup savedata...\n"
+			TMPBACKUPDIR=${BACKUPDIR}backup_$(date +%Y-%m-%d_%H-%M-%S)
+
+			mkdir $TMPBACKUPDIR
+			printf ""
+			cp $SAVEDIR ${TMPBACKUPDIR} -rv
+			printf ""
+			printf "Backup created at ${TMPBACKUPDIR})\n"
+		;;
+		'restore')
+			
+		;;
+		'edit')
+
+				if [ $2 ]; then
+					if [ -e ${SAVEDIR}${2} ]; then
+						TARGETS=$2
+					else
+						printf "Save not found\n"
+						exit 1
+					fi
+
+				else
+
+					printf "No Save selected. Select all saves? [Y/n]\n"
+					case $(read -n 1) in
+					'n','N')
+						printf "No save Selected\n"
+						exit 1
+					;;
+					*)
+						printf "Selecting all saves...\n"
+						TARGETS=*
+					;;
+					esac
+
+				fi
+					
+				printf "Unlock all Levels? [Y/n]\n"
+				case $(read -n 1) in
+					'n','N')
+						printf "Skipping Level unlock...\n"
+					;;
+					*)
+						printf "Unlocking all levels..."
+						sed -i -e 's/solved #f/solved #t/g' $TARGETS
+					;;
+				esac
+
+				printf "Select \n"
+				case $(read -n 1) in
+					'n','N')
+						printf "Skipping Level unlock...\n"
+					;;
+					*)
+						printf "Unlocking all levels..."
+						sed -i -e 's/solved #f/solved #t/g' $TARGETS
+					;;
+				esac
+		;;
+		*)
+		printf "\bOperations:\n"
+		printf "  list:\n"
+		printf "list all avaiable saves"\n
+		printf "\n"
+		printf "  edit <save> (WIP):\n"
+		printf "edit games saves\n"
+		printf "\n"
+		printf " backup\n"
+		printf "backup current saves\n"
+		printf "\n"
+		printf "restore (WIP)\n"
+		printf "restore backup\n"
+		printf "\n"
+		;;
+esac
