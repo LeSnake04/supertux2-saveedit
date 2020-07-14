@@ -82,14 +82,17 @@ case $1 in
 		printf "  list:\n"
 		printf "list all avaiable saves"\n
 		printf "\n"
-		printf "  edit <save> (WIP):\n"
+		printf "edit <save> (WIP):\n"
 		printf "edit games saves\n"
 		printf "\n"
-		printf " backup\n"
+		printf "backup\n"
 		printf "backup current saves\n"
 		printf "\n"
-		printf "restore (WIP)\n"
-		printf "restore backup\n"
+		printf "restore"
+		printf ""
+		printf "restore <backupname> (WIP)\n"
+		printf "restore spezified backup\n"
 		printf "\n"
+		printf ""
 		;;
 esac
