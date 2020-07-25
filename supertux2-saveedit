@@ -1,98 +1,176 @@
 #!/bin/bash
 
-printf "********************************\n"
-printf "Supertux2 Save editor by LeSnake\n"
-printf "********************************\n"
+TPUTBOLD="$(tput bold)"
+TPUTDIM="$(tput dim)"
+TPUTRESET="$(tput sgr 0)" 
+TPUTITALIC="$(tput sitm)" 
+TPUTBLINK="$(tput sitm)"
+TPUTLIGHT="$(tput smso)" 
 
-SAVEDIR=~/.local/share/supertux2/profile1/
-CONFIGDIR=~/.supertux2-saveedit/
-BACKUPDIR=~/.supertux2-saveedit/Backup
+TPUTGREEN="$(tput setaf 2)" 
+TPUTRED="$(tput setaf 1)"
+TPUTBLUE="$(tput setaf 6)"
+TPUTGREY="$(tput setaf 241)" 
+
+USERINPUTTPUT="${TPUTRESET}${TPUTGREEN}${TPUTBOLD}"
+LOGTPUT="${TPUTRESET}${TPUTGREY}${TPUTITALIC}"
+ERRORTPUT="${TPUTRESET}${TPUTRED}"
+
+
+printf "${TPUTBLUE}${TPUTBOLD}${TPUTLIGHT} ************************************ \n"
+printf " * Supertux2 Save editor by LeSnake * \n"
+printf " ************************************ ${TPUTRESET}\n\n"
+
+CONFIGDIR=~/.config/supertux2-saveedit
+
+#Loading default config 
+SAVEDIR=~/.local/share/supertux2/profile1
+BACKUPDIR=${CONFIGDIR}/Backup
+#Overwrite with user config
+source /home/david/.config/supertux2-saveedit/config.cfg
+
+if ! [ -e $CONFIGDIR/config.cfg ]; then
+	echo "creating config file..."
+	touch $CONFIGDIR/config.cfg
+fi
+
 mkdir $CONFIGDIR -p
 mkdir $BACKUPDIR -p
 cd $SAVEDIR
 
 case $1 in
-		'list')
-				printf "Avaiable Saves:\n"
-				ls *.stsg
-		;;
-		'backup')
-			printf "creating backup savedata...\n"
-			TMPBACKUPDIR=${BACKUPDIR}backup_$(date +%Y-%m-%d_%H-%M-%S)
+	"list")
+		printf "${TPUTBLUE}Avaiable Saves:\n"
+		ls *.stsg
+	;;
+	"backup")
+		printf "Creating backup ...\n"
+		TMPBACKUPDIR=${BACKUPDIR}/backup_$(date +%Y-%m-%d_%H-%M-%S)
+		mkdir $TMPBACKUPDIR
+		printf "\n${LOGTPUT}"
+		cp $SAVEDIR ${TMPBACKUPDIR} -rv
+		printf "${LOGTPUT}\n"
+		printf "Backup created at ${TMPBACKUPDIR})\n"
+	;;
 
-			mkdir $TMPBACKUPDIR
-			printf ""
-			cp $SAVEDIR ${TMPBACKUPDIR} -rv
-			printf ""
-			printf "Backup created at ${TMPBACKUPDIR})\n"
-		;;
-		'restore')
+	"restore")
+		#for i in $BACKUPDIR; do
+		#	echo test
+		#	echo $1	
+		#done
+
+		BACKUPS=$(ls $BACKUPDIR)
+		SELECTEDBACKUP=$2
+		SELECTEDBACKUPDIR=${BACKUPDIR}/$SELECTEDBACKUP
+		if [ -z "${SELECTEDBACKUP}" ]; then
+			if [ -z "$BACKUPS" ]; then
+				printf "${ERRORTPUT}No backups found.\n Create some with \'supertux2-savedit backup\'\n"
+			else
+				printf "Please choose a backup and an run \'supertux2-savedit restore <backupname>\'\n$BACKUPS\n"
+			fi
+		else
+			printf "restoring backup ${SELECTEDBACKUPDIR}\n\n"
+			cp $BACKUPDIR/$SELECTEDBACKUP/* $SAVEDIR -rv
+			printf "\n Restored backup ${SELECTEDBACKUPDIR}'"
+		fi
+		
+		
+		#case $SELECTEDBACKUP in
+		#NULL)
+		#	printf "please choose a backup and an run \'restore <backupname>\'"
+		#	ls $BACKUPDIR
+		#;;
+		#*)
+		#	cp $BACKUPDIR$SELECTEDBACKUP $SAVEDIR -v
+		#;;
+		#*
+		#esac
+	;;
+	'edit')
+		if [ $2 ]; then
+			if [ -e ${SAVEDIR}/${2} ]; then
+				TARGETS=$2
+			else
+				printf "${TPUTRED} Save not found\n"
+				exit 1
+			fi
+
+		else
+
+			#printf "${USERINPUTTPUT}No Save selected. Select all saves? [Y/n]"
+			case $(read -p "${USERINPUTTPUT}No Save selected. Select all saves? [Y/n]" -n 1) in
+			n|N )
+				printf "${ERRORTPUT}\nNo save Selected\n"
+				exit 1
+			;;
+			*)
+				printf "${LOGTPUT}\nSelecting all saves...\n"
+				TARGETS=*
+			;;
+		esac
+		fi
 			
-		;;
-		'edit')
+		#printf "\ņ${USERINPUTTPUT}Unlock all Levels? [y/N]"
+		#UNLOCKLEVELSINPUT=$(read -p "${USERINPUTTPUT}Unlock all Levels? [y/N]" -n 1)
+		#if [[ $UNLOCKLEVELSINPUT =~ ^[^Yy]$ ]]; then
+		#	printf "${LOGTPUT}\nUnlocking all levels...\n"
+		#	#sed -i -e 's/solved #f/solved #t/g' $TARGETS
+		#else
+		#	printf "${LOGTPUT}\nSkipping Level unlock...\n"
+		#fi
 
-				if [ $2 ]; then
-					if [ -e ${SAVEDIR}${2} ]; then
-						TARGETS=$2
-					else
-						printf "Save not found\n"
-						exit 1
-					fi
+		UNLOCKLEVELSINPUT=$(read -p "${USERINPUTTPUT}Unlock all Levels? [y/N]" -n 1)
+		case $UNLOCKLEVELSINPUT in
+			'y'|'Y' )
+				printf "${LOGTPUT}\nUnlocking all levels...\n"
+				#sed -i -e 's/solved #f/solved #t/g' $TARGETS
+			;;
+			* )
+				printf "${LOGTPUT}\nSkipping Level unlock...\n"
+		esac
 
-				else
+		printf "\n${USERINPUTTPUT}Avaiable bonuses:\n1:none 2:growup  3:iceflower  4:fireflower 5:airflower 6:earthflower\nPlese select a Bonus by pressing a number from 1-6: "
+		SELECTEDBONUS=$(read -n 1)
+		printf "\n${LOGTPUT}\n"
 
-					printf "No Save selected. Select all saves? [Y/n]\n"
-					case $(read -n 1) in
-					'n','N')
-						printf "No save Selected\n"
-						exit 1
-					;;
-					*)
-						printf "Selecting all saves...\n"
-						TARGETS=*
-					;;
-					esac
-
-				fi
-					
-				printf "Unlock all Levels? [Y/n]\n"
-				case $(read -n 1) in
-					'n','N')
-						printf "Skipping Level unlock...\n"
-					;;
-					*)
-						printf "Unlocking all levels..."
-						sed -i -e 's/solved #f/solved #t/g' $TARGETS
-					;;
-				esac
-
-				printf "Select \n"
-				case $(read -n 1) in
-					'n','N')
-						printf "Skipping Level unlock...\n"
-					;;
-					*)
-						printf "Unlocking all levels..."
-						sed -i -e 's/solved #f/solved #t/g' $TARGETS
-					;;
-				esac
+		while [[ $SELECTEDBONUS -lt 1 || $SELECTEDBONUS -gt 6 ]]; do
+			case $SELECTEDBONUS in
+				1 )
+					printf "Removing all bonuses ...\n"
+				;;
+				2 )
+					printf "Selecting bonus \'Growup\'"
+				;;
+				3 )
+					printf "Selecting bonus \'fireflower\'"
+				;;
+				4 )
+					printf "Selecting bonus \'iceflower\'"
+				;;
+				5 )
+					printf "Selecting bonus \'airflower\'"
+				;;
+				6 )
+					printf "Selecting bonus \'earthflower\'"
+				;;
+				* )
+					printf "${ERRORTPUT}Bonus with number ${SELECTEDBONUS} not found\n"
+					printf "${USERINPUTTPUT}Avaiable bonuses:\n1:none 2:growup  3:iceflower  4:fireflower 5:airflower 6:earthflower\nPlese select a Bonus by pressing a number from 1-6\n"
+					SELECTEDBONUS=$(read -n 1)
+					printf "${TPUTRESET}\n"
+			esac
+		done
 		;;
 		*)
-		printf "\bOperations:\n"
-		printf "  list:\n"
-		printf "list all avaiable saves"\n
-		printf "\n"
+		printf "${TPUTBLUE}Operations\n"
+		printf "==========\n"
+		printf "list:\n"
+		printf "  list all avaiable saves\n\n"
 		printf "edit <save> (WIP):\n"
-		printf "edit games saves\n"
-		printf "\n"
-		printf "backup\n"
-		printf "backup current saves\n"
-		printf "\n"
-		printf "restore"
-		printf ""
-		printf "restore <backupname> (WIP)\n"
-		printf "restore spezified backup\n"
-		printf "\n"
-		printf ""
+		printf "  Edit games saves\n  Creating a backup before editing is strongly recommended\n\n"
+		printf "backup: \n"
+		printf "  backup current saves\n\n"
+		printf "restore: \n"
+		printf "  restore backup\n\n"
 		;;
 esac
