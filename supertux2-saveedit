@@ -27,8 +27,7 @@ printf "${TPUTBLUE}${TPUTBOLD}${TPUTLIGHT} ************************************ 
 printf " * Supertux2 Save editor by LeSnake * \n"
 printf " ************************************ ${TPUTRESET}\n\n"
 
-CONFIGDI
-R=~/.config/supertux2-saveedit
+CONFIGDIR=~/.config/supertux2-saveedit
 CONFIGFILE=$CONFIGDIR/config.cfg
 
 ######################
@@ -57,6 +56,10 @@ function listbackups {
 	BACKUPS=$(ls $BACKUPDIR)
 	printf "${INFOTPUT}  Avaiable Backups:\n\n$BACKUPS\n"
 }
+
+#######
+#setup#
+#######
 
 mkdir -p $CONFIGDIR
 
@@ -136,8 +139,8 @@ case $1 in
 				exit 1
 			;;
 			*)
-				printf "${LOGTPUT}\nSelecting all saves...\n"
-				TARGETS=*
+				printf "${LOGTPUT}Selecting all saves...\n\n"
+				TARGETS=$SAVEDIR/*
 			;;
 		esac
 		fi
@@ -145,35 +148,36 @@ case $1 in
 		read -r -p "${USERINPUTTPUT}Unlock all Levels? [y/N]" -n 1 UNLOCKLEVELSINPUT
 		case $UNLOCKLEVELSINPUT in
 			[yY] )
-				printf "${LOGTPUT}Unlocking all levels...\n"
+				printf "${LOGTPUT}Unlocking all levels...\n\n"
+				#TODO uncommenting sed
 				#sed -i -e 's/solved #f/solved #t/g' $TARGETS
 			;;
 			* )
-				printf "${LOGTPUT}Skipping Level unlock...\n"
+				printf "${LOGTPUT}Skipping Level unlock...\n\n"
 		esac
 
-		read -p "Edit powerups? [y/N] " -n 1 EDITPOWERUPINPUT
+		read -p "${USERINPUTTPUT}Edit powerups? [y/N] " -n 1 EDITPOWERUPINPUT
 		case $EDITPOWERUPINPUT in
 			[yY] )
 				printf "\n${USERINPUTTPUT}Avaiable powerupes:\n 1:none 2:growup  3:iceflower  4:fireflower 5:airflower 6:earthflower\n"
 				read -p "Plese select a Bonus by pressing a number from 1-6: " -n 1 SELECTEDPOWERUP
 				#TODO powerup anmount
 				printf "${LOGTPUT}\n"
-				SETTINGPOWERUP=true
-				while [ $SETTINGPOWERUP ]; do
-					SETTINGPOWERUP=false
-					SETANMOUNT=true
+				SETTINGPOWERUP=1
+				while [ $SETTINGPOWERUP -eq 1 ]; do
+					SETTINGPOWERUP=0
+					SETANMOUNT=1
 					case $SELECTEDPOWERUP in
 						#TODO powerup edit 
 						1 )
 							printf "Removing all powerups ...\n"
 							POWERUPNAME="none"
-							SETANMOUNT=false
+							SETANMOUNT=0
 						;;
 						2 )
 							printf "Selecting powerup \'Growup\'"
 							POWERUPNAME="growup"
-							SETANMOUNT=false
+							SETANMOUNT=0
 						;;
 						3 )
 							printf "Selecting powerup \'fireflower\'"
@@ -194,32 +198,34 @@ case $1 in
 						* )
 							printf "${ERRORTPUT}Bonus with number ${SELECTEDPOWERUP} not found\n"
 							printf "${USERINPUTTPUT}Avaiable powerupes:\n1:none 2:growup  3:iceflower  4:fireflower 5:airflower 6:earthflower\nPlese select a Bonus by pressing a number from 1-6\n"
-							SELECTEDPOWERUP=$(read -n 1)
-							printf "\n"
+							printf "\n${USERINPUTTPUT}Avaiable powerupes:\n 1:none 2:growup  3:iceflower  4:fireflower 5:airflower 6:earthflower\n"
+							read -p "Plese select a Bonus by pressing a number from 1-6: " -n 1 SELECTEDPOWERUP
 							SETTINGPOWERUP=1
 					esac
 				done
+				sed -i -e 's/bonus \"*\"/bonus \"${POWERUPNAME}\"/g' $TARGETS
 			;;
 			*)
-				printf "Skipping Powerup edit..\n\n"
+				printf "${LOGTPUT}Skipping Powerup edit..\n\n"
 		esac
 	;; #end of edit
 	*)
 		printf "${INFOTPUT}Commands \n"
 		printf "==========\n"
-		printf "Arguments: [OPTIONAL] <NEEDED>\n\n"
+		printf "Arguments: [OPTIONAL] NEEDED\n\n"
 		#TODO --info,-i command
-		printf "--list,-l:\n"
-		printf "  list all avaiable saves\n\n"
-		printf "--edit,-e [save] (WIP):\n"
-		printf "  Edit games saves\n  Creating a backup before editing is strongly recommended\n\n"
-		printf "--backup,-b: \n"
-		printf "  backup current supertux2 saves\n\n"
-		#TODO --list-backups
-		printf "--restore,-r <BACKUP>: \n"
-		printf "  restore backup\n\n"
-		printf "--resetconfig: \n"
-		printf "  reset configuration file of this program.\n Does NOT affect Supertux 2 save files\n\n"
+		printf " --list,-l:\n"
+		printf "   list all avaiable saves\n\n"
+		printf " --edit,-e [save] (WIP):\n"
+		printf "   Edit games saves\n   Creating a backup before editing is strongly recommended\n\n"
+		printf " --backup,-b: \n"
+		printf "   backup current supertux2 saves\n\n"
+		printf " --list-backups,-lb:\n"
+		printf "   list game save backups "
+		printf " --restore,-r BACKUP: \n"
+		printf "   restore backup\n\n"
+		printf " --resetconfig: \n"
+		printf "  reset configuration file of this program.\n  Does NOT affect Supertux 2 save files\n\n"
 		printf "\n\nThank you very much for using supertux2-savedit! \n"
 		printf "Source code can be found on https://github.com/LeSnake04/supertux2-saveedit\n"
 		printf "Contributions, feture requests and bugreports are welcome :)\n"
