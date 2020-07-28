@@ -1,59 +1,97 @@
 #!/bin/bash
 
+#TODO Commenting
+
+#Basic set of tput commands
+#formating
 TPUTBOLD="$(tput bold)"
 TPUTDIM="$(tput dim)"
 TPUTRESET="$(tput sgr 0)" 
 TPUTITALIC="$(tput sitm)" 
 TPUTBLINK="$(tput sitm)"
 TPUTLIGHT="$(tput smso)" 
-
+#colors
 TPUTGREEN="$(tput setaf 2)" 
 TPUTRED="$(tput setaf 1)"
 TPUTBLUE="$(tput setaf 6)"
 TPUTGREY="$(tput setaf 241)" 
 
-USERINPUTTPUT="${TPUTRESET}${TPUTGREEN}${TPUTBOLD}"
-LOGTPUT="${TPUTRESET}${TPUTGREY}${TPUTITALIC}"
-ERRORTPUT="${TPUTRESET}${TPUTRED}"
+#tput presets 
+USERINPUTTPUT="${TPUTRESET}${TPUTGREEN}${TPUTBOLD}" #user inputs
+LOGTPUT="${TPUTRESET}${TPUTGREY}${TPUTITALIC} " #advanced logging 
+ERRORTPUT="${TPUTRESET}${TPUTBOLD}${TPUTRED} " #errors
+INFOTPUT="${TPUTRESET}${TPUTBLUE}" #logging
 
 
 printf "${TPUTBLUE}${TPUTBOLD}${TPUTLIGHT} ************************************ \n"
 printf " * Supertux2 Save editor by LeSnake * \n"
 printf " ************************************ ${TPUTRESET}\n\n"
 
-CONFIGDIR=~/.config/supertux2-saveedit
+CONFIGDI
+R=~/.config/supertux2-saveedit
+CONFIGFILE=$CONFIGDIR/config.cfg
 
-#Loading default config 
-SAVEDIR=~/.local/share/supertux2/profile1
-BACKUPDIR=${CONFIGDIR}/Backup
-#Overwrite with user config
-source /home/david/.config/supertux2-saveedit/config.cfg
+######################
+#function definitions#
+######################
 
-if ! [ -e $CONFIGDIR/config.cfg ]; then
-	echo "creating config file..."
-	touch $CONFIGDIR/config.cfg
+function loaddefaultconfig {
+#load default configuration file
+	printf "${INFOTPUT}Writing default configuration to config file..."
+	#writing default config to config file
+	printf "SAVEDIR=~/.local/share/supertux2/profile1\nBACKUPDIR=${CONFIGDIR}/Backup" >> $CONFIGDIR/config.cfg
+}
+
+function backupgamesave {
+#backup game saves
+	printf "${INFOTPUT} Creating backup ...\n"
+	TMPBACKUPDIR=${BACKUPDIR}/backup_$(date +%Y-%m-%d_%H-%M-%S)
+	mkdir $TMPBACKUPDIR
+	printf "\n${LOGTPUT}"
+	cp $SAVEDIR ${TMPBACKUPDIR} -rv
+	printf "\n"
+	printf "${INFOTPUT}Backup created at ${TMPBACKUPDIR}\n"
+}
+function listbackups {
+#list avaiable backups
+	BACKUPS=$(ls $BACKUPDIR)
+	printf "${INFOTPUT}  Avaiable Backups:\n\n$BACKUPS\n"
+}
+
+mkdir -p $CONFIGDIR
+
+#creating config file if don't exist
+if ! [ -a $CONFIGFILE ]; then
+	printf "${INFOTPUT}creating config file...\n${TPUTRESET}"
+	touch $CONFIGFILE
+	loaddefaultconfig
 fi
 
-mkdir $CONFIGDIR -p
-mkdir $BACKUPDIR -p
+#loading config file
+source /home/david/.config/supertux2-saveedit/config.cfg
+
+mkdir -p $BACKUPDIR
+
+#creating folders and files
+mkdir -p $CONFIGDIR 
+mkdir -p $BACKUPDIR
+
 cd $SAVEDIR
 
-case $1 in
-	"list")
-		printf "${TPUTBLUE}Avaiable Saves:\n"
-		ls *.stsg
-	;;
-	"backup")
-		printf "Creating backup ...\n"
-		TMPBACKUPDIR=${BACKUPDIR}/backup_$(date +%Y-%m-%d_%H-%M-%S)
-		mkdir $TMPBACKUPDIR
-		printf "\n${LOGTPUT}"
-		cp $SAVEDIR ${TMPBACKUPDIR} -rv
-		printf "${LOGTPUT}\n"
-		printf "Backup created at ${TMPBACKUPDIR})\n"
-	;;
 
-	"restore")
+##########
+#commands#
+##########
+case $1 in
+	"--list" | "-l" )
+		#list avaiable game saves
+		printf "${TPUTBLUE}Avaiable game saves:\n"
+		ls $SAVEDIR/*.stsg
+	;;
+	"--backup" | "-b")
+		backupgamesave
+	;;
+	"--restore" | "-r")
 		#for i in $BACKUPDIR; do
 		#	echo test
 		#	echo $1	
@@ -62,31 +100,27 @@ case $1 in
 		BACKUPS=$(ls $BACKUPDIR)
 		SELECTEDBACKUP=$2
 		SELECTEDBACKUPDIR=${BACKUPDIR}/$SELECTEDBACKUP
-		if [ -z "${SELECTEDBACKUP}" ]; then
-			if [ -z "$BACKUPS" ]; then
-				printf "${ERRORTPUT}No backups found.\n Create some with \'supertux2-savedit backup\'\n"
-			else
-				printf "Please choose a backup and an run \'supertux2-savedit restore <backupname>\'\n$BACKUPS\n"
-			fi
+		if [ -z "$BACKUPS" ]; then
+			printf "${ERRORTPUT}No backups found.\n Consider creating some with \'$0 backup\'\n"
 		else
-			printf "restoring backup ${SELECTEDBACKUPDIR}\n\n"
-			cp $BACKUPDIR/$SELECTEDBACKUP/* $SAVEDIR -rv
-			printf "\n Restored backup ${SELECTEDBACKUPDIR}'"
-		fi
-		
-		
-		#case $SELECTEDBACKUP in
-		#NULL)
-		#	printf "please choose a backup and an run \'restore <backupname>\'"
-		#	ls $BACKUPDIR
-		#;;
-		#*)
-		#	cp $BACKUPDIR$SELECTEDBACKUP $SAVEDIR -v
-		#;;
-		#*
-		#esac
+			
+			if ! [ -z "${SELECTEDBACKUP}" ]; then
+				printf "restoring backup ${SELECTEDBACKUPDIR}\n\n${LOGTPUT}"
+				cp $BACKUPDIR/$SELECTEDBACKUP/* $SAVEDIR -rv
+				printf "${INFOTPUT}\n Restored backup \'${SELECTEDBACKUPDIR}\'\n"
+			else
+				listbackups
+				printf "Please choose a backup from above and an run \'$0 restore <backupname>\'\n"
+			fi
+		fi		
 	;;
-	'edit')
+	"--list-backups" | "-lb" )
+		listbackups
+	;;
+	"--resetconfig" )
+		loaddefaultconfig
+	;;
+	"--edit" | "-e" )
 		if [ $2 ]; then
 			if [ -e ${SAVEDIR}/${2} ]; then
 				TARGETS=$2
@@ -94,12 +128,10 @@ case $1 in
 				printf "${TPUTRED} Save not found\n"
 				exit 1
 			fi
-
 		else
-
-			#printf "${USERINPUTTPUT}No Save selected. Select all saves? [Y/n]"
-			case $(read -p "${USERINPUTTPUT}No Save selected. Select all saves? [Y/n]" -n 1) in
-			n|N )
+			read -r -p "${USERINPUTTPUT}No Save selected. Select all saves? [Y/n]" -n 1 SELECTALLSAVESINPUT
+			case $SELECTALLSAVESINPUT in
+			[nN])
 				printf "${ERRORTPUT}\nNo save Selected\n"
 				exit 1
 			;;
@@ -109,68 +141,87 @@ case $1 in
 			;;
 		esac
 		fi
-			
-		#printf "\ņ${USERINPUTTPUT}Unlock all Levels? [y/N]"
-		#UNLOCKLEVELSINPUT=$(read -p "${USERINPUTTPUT}Unlock all Levels? [y/N]" -n 1)
-		#if [[ $UNLOCKLEVELSINPUT =~ ^[^Yy]$ ]]; then
-		#	printf "${LOGTPUT}\nUnlocking all levels...\n"
-		#	#sed -i -e 's/solved #f/solved #t/g' $TARGETS
-		#else
-		#	printf "${LOGTPUT}\nSkipping Level unlock...\n"
-		#fi
 
-		UNLOCKLEVELSINPUT=$(read -p "${USERINPUTTPUT}Unlock all Levels? [y/N]" -n 1)
+		read -r -p "${USERINPUTTPUT}Unlock all Levels? [y/N]" -n 1 UNLOCKLEVELSINPUT
 		case $UNLOCKLEVELSINPUT in
-			'y'|'Y' )
-				printf "${LOGTPUT}\nUnlocking all levels...\n"
+			[yY] )
+				printf "${LOGTPUT}Unlocking all levels...\n"
 				#sed -i -e 's/solved #f/solved #t/g' $TARGETS
 			;;
 			* )
-				printf "${LOGTPUT}\nSkipping Level unlock...\n"
+				printf "${LOGTPUT}Skipping Level unlock...\n"
 		esac
 
-		printf "\n${USERINPUTTPUT}Avaiable bonuses:\n1:none 2:growup  3:iceflower  4:fireflower 5:airflower 6:earthflower\nPlese select a Bonus by pressing a number from 1-6: "
-		SELECTEDBONUS=$(read -n 1)
-		printf "\n${LOGTPUT}\n"
-
-		while [[ $SELECTEDBONUS -lt 1 || $SELECTEDBONUS -gt 6 ]]; do
-			case $SELECTEDBONUS in
-				1 )
-					printf "Removing all bonuses ...\n"
-				;;
-				2 )
-					printf "Selecting bonus \'Growup\'"
-				;;
-				3 )
-					printf "Selecting bonus \'fireflower\'"
-				;;
-				4 )
-					printf "Selecting bonus \'iceflower\'"
-				;;
-				5 )
-					printf "Selecting bonus \'airflower\'"
-				;;
-				6 )
-					printf "Selecting bonus \'earthflower\'"
-				;;
-				* )
-					printf "${ERRORTPUT}Bonus with number ${SELECTEDBONUS} not found\n"
-					printf "${USERINPUTTPUT}Avaiable bonuses:\n1:none 2:growup  3:iceflower  4:fireflower 5:airflower 6:earthflower\nPlese select a Bonus by pressing a number from 1-6\n"
-					SELECTEDBONUS=$(read -n 1)
-					printf "${TPUTRESET}\n"
-			esac
-		done
-		;;
-		*)
-		printf "${TPUTBLUE}Operations\n"
+		read -p "Edit powerups? [y/N] " -n 1 EDITPOWERUPINPUT
+		case $EDITPOWERUPINPUT in
+			[yY] )
+				printf "\n${USERINPUTTPUT}Avaiable powerupes:\n 1:none 2:growup  3:iceflower  4:fireflower 5:airflower 6:earthflower\n"
+				read -p "Plese select a Bonus by pressing a number from 1-6: " -n 1 SELECTEDPOWERUP
+				#TODO powerup anmount
+				printf "${LOGTPUT}\n"
+				SETTINGPOWERUP=true
+				while [ $SETTINGPOWERUP ]; do
+					SETTINGPOWERUP=false
+					SETANMOUNT=true
+					case $SELECTEDPOWERUP in
+						#TODO powerup edit 
+						1 )
+							printf "Removing all powerups ...\n"
+							POWERUPNAME="none"
+							SETANMOUNT=false
+						;;
+						2 )
+							printf "Selecting powerup \'Growup\'"
+							POWERUPNAME="growup"
+							SETANMOUNT=false
+						;;
+						3 )
+							printf "Selecting powerup \'fireflower\'"
+							POWERUPNAME="fireflower"
+						;;
+						4 )
+							printf "Selecting powerup \'iceflower\'"
+							POWERUPNAME="iceflower"
+						;;
+						5 )
+							printf "Selecting powerup \'airflower\'"
+							POWERUPNAME="airflower"
+						;;
+						6 )
+							printf "Selecting powerup \'earthflower\'"
+							POWERUPNAME="Earthflower"
+						;;
+						* )
+							printf "${ERRORTPUT}Bonus with number ${SELECTEDPOWERUP} not found\n"
+							printf "${USERINPUTTPUT}Avaiable powerupes:\n1:none 2:growup  3:iceflower  4:fireflower 5:airflower 6:earthflower\nPlese select a Bonus by pressing a number from 1-6\n"
+							SELECTEDPOWERUP=$(read -n 1)
+							printf "\n"
+							SETTINGPOWERUP=1
+					esac
+				done
+			;;
+			*)
+				printf "Skipping Powerup edit..\n\n"
+		esac
+	;; #end of edit
+	*)
+		printf "${INFOTPUT}Commands \n"
 		printf "==========\n"
-		printf "list:\n"
+		printf "Arguments: [OPTIONAL] <NEEDED>\n\n"
+		#TODO --info,-i command
+		printf "--list,-l:\n"
 		printf "  list all avaiable saves\n\n"
-		printf "edit <save> (WIP):\n"
+		printf "--edit,-e [save] (WIP):\n"
 		printf "  Edit games saves\n  Creating a backup before editing is strongly recommended\n\n"
-		printf "backup: \n"
-		printf "  backup current saves\n\n"
-		printf "restore: \n"
+		printf "--backup,-b: \n"
+		printf "  backup current supertux2 saves\n\n"
+		#TODO --list-backups
+		printf "--restore,-r <BACKUP>: \n"
 		printf "  restore backup\n\n"
-		;;
+		printf "--resetconfig: \n"
+		printf "  reset configuration file of this program.\n Does NOT affect Supertux 2 save files\n\n"
+		printf "\n\nThank you very much for using supertux2-savedit! \n"
+		printf "Source code can be found on https://github.com/LeSnake04/supertux2-saveedit\n"
+		printf "Contributions, feture requests and bugreports are welcome :)\n"
+	;;
 esac
