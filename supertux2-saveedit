@@ -47,7 +47,7 @@ function backupgamesave {
 	TMPBACKUPDIR=${BACKUPDIR}/backup_$(date +%Y-%m-%d_%H-%M-%S)
 	mkdir $TMPBACKUPDIR
 	printf "\n${LOGTPUT}"
-	cp $SAVEDIR ${TMPBACKUPDIR} -rv
+	cp $SAVEDIR/* ${TMPBACKUPDIR} -rv
 	printf "\n"
 	printf "${INFOTPUT}Backup created at ${TMPBACKUPDIR}\n"
 }
@@ -108,7 +108,7 @@ case $1 in
 		else
 			
 			if ! [ -z "${SELECTEDBACKUP}" ]; then
-				printf "restoring backup ${SELECTEDBACKUPDIR}\n\n${LOGTPUT}"
+				printf "${INFOTPUT}restoring backup ${SELECTEDBACKUPDIR}\n\n${LOGTPUT}"
 				cp $BACKUPDIR/$SELECTEDBACKUP/* $SAVEDIR -rv
 				printf "${INFOTPUT}\n Restored backup \'${SELECTEDBACKUPDIR}\'\n"
 			else
@@ -203,7 +203,7 @@ case $1 in
 							SETTINGPOWERUP=1
 					esac
 				done
-				sed -i -e 's/bonus \"*\"/bonus \"${POWERUPNAME}\"/g' $TARGETS
+				sed -i -e "s|bonus \"[a-z]\"|bonus \"${POWERUPNAME}\"|g" $TARGETS
 			;;
 			*)
 				printf "${LOGTPUT}Skipping Powerup edit..\n\n"
@@ -221,7 +221,7 @@ case $1 in
 		printf " --backup,-b: \n"
 		printf "   backup current supertux2 saves\n\n"
 		printf " --list-backups,-lb:\n"
-		printf "   list game save backups "
+		printf "   list game save backups\n\n"
 		printf " --restore,-r BACKUP: \n"
 		printf "   restore backup\n\n"
 		printf " --resetconfig: \n"
