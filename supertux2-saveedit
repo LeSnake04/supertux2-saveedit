@@ -145,8 +145,13 @@ case $1 in
 		read -r -p "${USERINPUTTPUT}Unlock all Levels? [y/N]" -n 1 UNLOCKLEVELSINPUT
 		case $UNLOCKLEVELSINPUT in
 			[yY] )
+<<<<<<< Updated upstream
 				printf "${LOGTPUT}Unlocking all levels...\n"
 				#sed -i -e 's/solved #f/solved #t/g' $TARGETS
+=======
+				printf "${LOGTPUT}Unlocking all levels...\n\n"
+				sed -i -e 's/solved #f/solved #t/g' $TARGETS
+>>>>>>> Stashed changes
 			;;
 			* )
 				printf "${LOGTPUT}Skipping Level unlock...\n"
@@ -199,6 +204,23 @@ case $1 in
 							SETTINGPOWERUP=1
 					esac
 				done
+<<<<<<< Updated upstream
+=======
+				sed -i -e "s|bonus \"none\"|bonus \"${POWERUPNAME}\"|g" $TARGETS
+				sed -i -e "s|bonus \"growup\"|bonus \"${POWERUPNAME}\"|g" $TARGETS
+				sed -i -e "s|bonus \"fireflower\"|bonus \"${POWERUPNAME}\"|g" $TARGETS
+				sed -i -e "s|bonus \"iceflower\"|bonus \"${POWERUPNAME}\"|g" $TARGETS
+				sed -i -e "s|bonus \"airflower\"|bonus \"${POWERUPNAME}\"|g" $TARGETS
+				sed -i -e "s|bonus \"earthflower\"|bonus \"${POWERUPNAME}\"|g" $TARGETS
+
+				if [[ SETANMOUNT -eq 1 ]]; then
+					read -p "${USERINPUTTPUT}Set anmount of powerups: " POWERUPANMOUNT
+					sed -i -e "s/${POWERUPNAME}s ([0-9])/${POWERUPNAME}s ${POWERUPANMOUNT}/g" $TARGETS
+
+				fi
+
+				#todo set coins
+>>>>>>> Stashed changes
 			;;
 			*)
 				printf "Skipping Powerup edit..\n\n"
